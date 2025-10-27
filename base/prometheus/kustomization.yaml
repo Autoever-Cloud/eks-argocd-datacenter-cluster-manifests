@@ -1,0 +1,7 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - prom-agent-config.yaml
+  - prom-agent-deployment.yaml
+  - prom-agent-pvc.yaml
+  - prom-agent-rbac.yaml

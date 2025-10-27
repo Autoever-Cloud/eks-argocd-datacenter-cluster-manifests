@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: fluentd-aggregator
+  namespace: efkstack
+spec:
+  serviceName: fluentd-aggregator
+  replicas: 2   # 안정성을 위해 2개 이상 권장
+  selector:
+    matchLabels:
+      app: fluentd-aggregator
+  template:
+    metadata:
+      labels:
+        app: fluentd-aggregator
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: fluentd
+        image: fluent/fluentd-kubernetes-daemonset:v1-debian-kafka
+        ports:
+        - containerPort: 24224
+          name: forward
+        - containerPort: 24224
+          name: forward-udp
+          protocol: UDP
+        - containerPort: 2020
+          name: monitor
+        volumeMounts:
+        - name: config
+          mountPath: /fluentd/etc
+        - name: buffer
+          mountPath: /fluentd/buffer
+      volumes:
+      - name: config
+        configMap:
+          name: fluentd-config
+  volumeClaimTemplates:
+  - metadata:
+      name: buffer
+    spec:
+      accessModes: [ "ReadWriteMany" ]
+      storageClassName: efs-sc
+      resources:
+        requests:
+          storage: 5Gi   # 필요에 따라 조정 가능
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fluentd-aggregator
+  namespace: efkstack
+spec:
+  selector:
+    app: fluentd-aggregator
+  ports:
+  - name: forward
+    protocol: TCP
+    port: 24224
+    targetPort: 24224
+  - name: forward-udp
+    protocol: UDP
+    port: 24224
+    targetPort: 24224
+  - name: monitor
+    protocol: TCP
+    port: 2020
+    targetPort: 2020

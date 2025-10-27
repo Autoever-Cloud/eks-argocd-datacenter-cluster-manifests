@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prom-agent
+  namespace: prometheus
+  labels:
+    app: prom-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prom-agent
+  template:
+    metadata:
+      labels:
+        app: prom-agent
+    spec:
+      serviceAccountName: prom-agent
+      containers:
+        - name: prometheus-agent
+          image: prom/prometheus:v2.52.0
+          args:
+            - --config.file=/etc/prometheus/prometheus.yml
+            - --enable-feature=agent
+            - --storage.agent.path=/prom-agent
+            - --web.enable-lifecycle
+          ports:
+            - name: http
+              containerPort: 9090
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus
+            - name: wal
+              mountPath: /prom-agent
+      volumes:
+        - name: config
+          configMap:
+            name: prom-agent-config
+        - name: wal
+          persistentVolumeClaim:
+            claimName: prom-agent-wal

@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-exporter
+  namespace: prometheus
+  labels:
+    app: node-exporter
+spec:
+  selector:
+    matchLabels:
+      app: node-exporter
+  template:
+    metadata:
+      labels:
+        app: node-exporter
+    spec:
+      serviceAccountName: node-exporter
+      hostNetwork: true
+      hostPID: true
+      containers:
+      - name: node-exporter
+        image: quay.io/prometheus/node-exporter:v1.8.1
+        args:
+          - --path.rootfs=/
+        ports:
+        - name: metrics
+          containerPort: 9100
+          hostPort: 9100
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 200Mi

@@ -1,0 +1,108 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluent-bit-config
+  namespace: efkstack
+data:
+  fluent-bit.conf: |
+    [SERVICE]
+        Flush                 1
+        Daemon                Off
+        Log_Level             info
+        storage.path          /var/fluent-bit/storage/
+        storage.sync          normal
+        storage.checksum      off
+        storage.max_chunks_up 256
+        Parsers_File          parsers.conf
+
+    # =======================
+    # INPUTS (containerd/CRI)
+    # =======================
+    # 서비스 로그만: /var/log/containers/*_service_*.log
+    [INPUT]
+        Name                  tail
+        Path                  /var/log/containers/*_service_*.log
+        Tag                   kube.*
+        Parser                cri
+        Mem_Buf_Limit         10MB
+        Skip_Long_Lines       On
+        storage.type          filesystem
+        DB                    /var/fluent-bit/storage/tail-service.db
+        DB.sync               normal
+
+    # 시스템 로그만: /var/log/containers/*_system_*.log
+    [INPUT]
+        Name                  tail
+        Path                  /var/log/containers/*_system_*.log
+        Tag                   kube.*
+        Parser                cri
+        Mem_Buf_Limit         10MB
+        Skip_Long_Lines       On
+        storage.type          filesystem
+        DB                    /var/fluent-bit/storage/tail-system.db
+        DB.sync               normal
+
+    # ==========================
+    # FILTERS (K8s meta + tagging)
+    # ==========================
+    # K8s 메타데이터 병합 (JSON이면 필드 병합)
+    [FILTER]
+        Name                  kubernetes
+        Match                 kube.var.log.containers.*
+        Kube_URL              https://kubernetes.default.svc:443
+        Kube_Tag_Prefix       kube.var.log.containers.
+        Merge_Log             On
+        Keep_Log              Off
+        K8S-Logging.Exclude   On
+        Buffer_Size           0
+
+    # 서비스: app=service → 최종 태그 service.application.log
+    [FILTER]
+        Name                  rewrite_tag
+        Match                 kube.var.log.containers.service*
+        Rule                  $kubernetes['labels']['app'] ^service$ service.application.log false
+        Rule                  $log ^.*$ service.unmatched.log false
+
+    # 시스템: system 라벨값에 따라 최종 태그 분기:
+    [FILTER]
+        Name                  rewrite_tag
+        Match                 kube.var.log.containers.*system*
+        Rule                  $kubernetes['labels']['system'] .*auth.* system.auth.log false
+        Rule                  $kubernetes['labels']['system'] .*kmsg.* system.kmsg.log false
+        Rule                  $log ^.*$ system.unmatched.log false
+
+    [FILTER]
+        Name                   modify
+        Match                  *
+        Remove                 kubernetes
+
+    # =======================
+    # OUTPUTS
+    # =======================
+    # 전부 Fluentd로 전달
+    [OUTPUT]
+        Name                  forward
+        Match                 *
+        Host                  fluentd-aggregator.efkstack.svc.cluster.local
+        Port                  24224
+        Retry_Limit           False
+        net.keepalive         On
+        net.connect_timeout   10
+        net.dns.resolver      LEGACY
+    [OUTPUT]
+        Name                  stdout
+        Match                 *
+
+  parsers.conf: |
+    # CRI (containerd) 단일 라인 파서
+    [PARSER]
+        Name        cri
+        Format      regex
+        Regex       ^(?<time>[^ ]+) (?<stream>stdout|stderr) [^ ]* (?<log>.*)$
+        Time_Key    time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L%z
+
+    # (참고) JSON 파서가 필요하면 사용 가능
+    [PARSER]
+        Name        json
+        Format      json

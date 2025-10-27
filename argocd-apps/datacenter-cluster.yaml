@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: datacenter-cluster
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/Autoever-Cloud/argocd-datacenter-cluster-manifests.git' 
+    targetRevision: main # 브랜치 명시
+    path: overlays/production
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

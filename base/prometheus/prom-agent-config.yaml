@@ -1,0 +1,111 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prom-agent-config
+  namespace: prometheus
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+      external_labels:
+        cluster: datacenter
+
+    ###############################################################
+    # ✅ 1) 노드 메트릭: node-exporter
+    ###############################################################
+    scrape_configs:
+      - job_name: 'node-exporter'
+        kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names: ['prometheus']
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: node-exporter
+          - source_labels: [__meta_kubernetes_namespace]
+            action: keep
+            regex: prometheus
+          - source_labels: [__meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: metrics
+
+    ###############################################################
+    # ✅ 2) 컨테이너 리소스 메트릭: cAdvisor
+    ###############################################################
+      - job_name: 'kubelet-cadvisor'
+        scheme: https
+        metrics_path: /metrics/cadvisor
+        kubernetes_sd_configs:
+          - role: node
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          insecure_skip_verify: true
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - action: replace
+            source_labels: [__address__]
+            regex: (.+):\d+
+            replacement: ${1}:10250
+            target_label: __address__
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+          - action: replace
+            source_labels: [__meta_kubernetes_node_name]
+            target_label: instance
+
+    ###############################################################
+    # ✅ 3) 클러스터 상태 메트릭: kube-state-metrics
+    ###############################################################
+      - job_name: 'kube-state-metrics'
+        kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names: ['prometheus', 'service', 'system']
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: kube-state-metrics
+          - source_labels: [__meta_kubernetes_namespace]
+            action: keep
+            regex: (prometheus|service|system)
+
+    ###############################################################
+    # ✅ 4) Pod 자동탐색 (annotation 기반)
+    ###############################################################
+      - job_name: 'kubernetes-pods'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: ['prometheus', 'service', 'system']
+        relabel_configs:
+          - action: keep
+            source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            regex: "true"
+          - action: replace
+            source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            target_label: __metrics_path__
+          - action: replace
+            source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            regex: (.+):(?:\d+);(.+)
+            replacement: ${1}:${2}
+            target_label: __address__
+          - action: replace
+            source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+          - action: replace
+            source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+          - action: labelmap
+            regex: __meta_kubernetes_pod_label_(.+)
+
+    ###############################################################
+    # ✅ 5) Remote Write: 중앙 Prometheus로 전송
+    ###############################################################
+    remote_write:
+      - url: "http://192.168.1.233:9090/api/v1/write"
+        queue_config:
+          max_shards: 8
+          capacity: 20000
+          max_samples_per_send: 5000

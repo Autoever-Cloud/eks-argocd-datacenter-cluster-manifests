@@ -37,8 +37,15 @@ while true; do
 done
 
 echo "🔑 [5/5] Fetching initial admin password..."
-PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret \
-  -o jsonpath="{.data.password}" | base64 -d)
+# Secret이 생성될 때까지 기다림
+for i in {1..30}; do
+  PASSWORD=$(kubectl -n $ARGOCD_NAMESPACE get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" 2>/dev/null | base64 -d)
+  if [[ -n "$PASSWORD" ]]; then
+    break
+  fi
+  echo "⏳ Waiting for argocd-initial-admin-secret to be created..."
+  sleep 5
+done
 echo ""
 echo "========================================"
 echo "✅ Argo CD successfully installed!"

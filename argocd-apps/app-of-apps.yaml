@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/Autoever-Cloud/argocd-datacenter-cluster-manifests.git' 
+    repoURL: 'https://github.com/Autoever-Cloud/eks-argocd-datacenter-cluster-manifests.git' 
     targetRevision: main
     path: argocd-apps
   destination:

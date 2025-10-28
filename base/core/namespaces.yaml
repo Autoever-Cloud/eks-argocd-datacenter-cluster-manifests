@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: efkstack
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: prometheus
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: system
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: service

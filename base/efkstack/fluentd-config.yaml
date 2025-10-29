@@ -19,7 +19,7 @@ data:
     ############################################################
     <match service.application.log>
       @type kafka2
-      brokers b-1.sologmskcluster2.tak97t.c4.kafka.ap-northeast-2.amazonaws.com:9094 
+      brokers b-1.sologmskcluster2.tak97t.c4.kafka.ap-northeast-2.amazonaws.com:9092,b-2.sologmskcluster2.tak97t.c4.kafka.ap-northeast-2.amazonaws.com:9092 
       topic service-topic
       use_event_time true
 
@@ -43,7 +43,7 @@ data:
     ############################################################
     <match system.kmsg.log>
       @type kafka2
-      brokers b-1.sologmskcluster2.tak97t.c4.kafka.ap-northeast-2.amazonaws.com:9094 
+      brokers b-1.sologmskcluster2.tak97t.c4.kafka.ap-northeast-2.amazonaws.com:9092,b-2.sologmskcluster2.tak97t.c4.kafka.ap-northeast-2.amazonaws.com:9092
       topic system-kmsg-topic
       use_event_time true
 
@@ -78,7 +78,7 @@ data:
 
     <match system.auth.log>
       @type kafka2
-      brokers b-1.sologmskcluster2.tak97t.c4.kafka.ap-northeast-2.amazonaws.com:9094 
+      brokers b-1.sologmskcluster2.tak97t.c4.kafka.ap-northeast-2.amazonaws.com:9092,b-2.sologmskcluster2.tak97t.c4.kafka.ap-northeast-2.amazonaws.com:9092
       topic system-auth-topic
       use_event_time true
 

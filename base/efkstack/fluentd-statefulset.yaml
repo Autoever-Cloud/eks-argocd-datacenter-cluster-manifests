@@ -13,8 +13,6 @@ spec:
     metadata:
       labels:
         app: fluentd-aggregator
-      annotations:
-        checksum/config: "{{ .Files.GetSHA256 \"fluentd-config.yaml\" }}"
     spec:
       terminationGracePeriodSeconds: 30
       containers:

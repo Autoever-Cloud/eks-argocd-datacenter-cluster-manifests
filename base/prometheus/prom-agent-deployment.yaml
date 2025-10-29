@@ -6,13 +6,12 @@ metadata:
   labels:
     app: prom-agent
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: prom-agent
   template:
     metadata:
-      annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/prom-agent-config.yaml") . | sha256sum }}
       labels:
         app: prom-agent
     spec:

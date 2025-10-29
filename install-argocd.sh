@@ -6,13 +6,13 @@ set -e
 # ⚙️ 환경: AWS EKS + NLB 기반 접근
 # =================================
 
-echo "🚀 [1/5] Creating namespace 'argocd'..."
+echo "🚀 [1/4] Creating namespace 'argocd'..."
 kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
 
-echo "📦 [2/5] Installing Argo CD (latest stable release)..."
+echo "📦 [2/4] Installing Argo CD (latest stable release)..."
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
-echo "🌐 [3/5] Patching argocd-server Service to LoadBalancer (NLB)..."
+echo "🌐 [3/4] Patching argocd-server Service to LoadBalancer (NLB)..."
 kubectl patch svc argocd-server -n argocd -p '{
   "spec": {
     "type": "LoadBalancer",
@@ -20,7 +20,7 @@ kubectl patch svc argocd-server -n argocd -p '{
   }
 }' || true
 
-echo "🔧 [4/5] Annotating argocd-server Service for AWS NLB..."
+echo "🔧 [4/4] Annotating argocd-server Service for AWS NLB..."
 kubectl annotate svc argocd-server -n argocd \
   service.beta.kubernetes.io/aws-load-balancer-type="nlb" \
   --overwrite || true
@@ -36,20 +36,11 @@ while true; do
   sleep 5
 done
 
-echo "🔑 [5/5] Fetching initial admin password..."
-# Secret이 생성될 때까지 기다림
-for i in {1..30}; do
-  PASSWORD=$(kubectl -n $ARGOCD_NAMESPACE get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" 2>/dev/null | base64 -d)
-  if [[ -n "$PASSWORD" ]]; then
-    break
-  fi
-  echo "⏳ Waiting for argocd-initial-admin-secret to be created..."
-  sleep 5
-done
 echo ""
 echo "========================================"
 echo "✅ Argo CD successfully installed!"
 echo "🌐 URL: https://$ELB"
 echo "👤 Username: admin"
-echo "🔐 Password: $PASSWORD"
+echo "🔐 Password: Run this command to see the initial password.
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo"
 echo "========================================"

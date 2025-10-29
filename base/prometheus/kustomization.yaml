@@ -5,9 +5,3 @@ resources:
   - prom-agent-deployment.yaml
   - prom-agent-pvc.yaml
   - prom-agent-rbac.yaml
-configMapGenerator:
-  - name: prom-agent-config
-    files:
-      - prometheus.yml=prom-agent-config.yaml
-    options:
-      disableNameSuffixHash: false

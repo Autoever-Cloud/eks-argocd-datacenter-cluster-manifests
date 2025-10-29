@@ -7,9 +7,3 @@ resources:
   - fluentd-config.yaml
   - fluentd-netpol.yaml
   - fluentd-statefulset.yaml
-configMapGenerator:
-  - name: fluentd-config
-    files:
-      - fluent.conf=fluentd-config.yaml
-    options:
-      disableNameSuffixHash: false

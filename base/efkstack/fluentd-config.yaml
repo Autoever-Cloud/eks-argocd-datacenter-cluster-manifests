@@ -19,7 +19,7 @@ data:
     ############################################################
     <match service.application.log>
       @type kafka2
-      brokers ac6e87673463a479fa5cd90a7a876939-af18a545350c8258.elb.ap-northeast-2.amazonaws.com:9094
+      brokers a01a893d804ad44018657f3b84eaaa35-1872ea900a3b7e8e.elb.ap-northeast-2.amazonaws.com:9094
       topic service-topic
       use_event_time true
 
@@ -43,7 +43,7 @@ data:
     ############################################################
     <match system.kmsg.log>
       @type kafka2
-      brokers ac6e87673463a479fa5cd90a7a876939-af18a545350c8258.elb.ap-northeast-2.amazonaws.com:9094
+      brokers a01a893d804ad44018657f3b84eaaa35-1872ea900a3b7e8e.elb.ap-northeast-2.amazonaws.com:9094
       topic system-kmsg-topic
       use_event_time true
 
@@ -78,7 +78,7 @@ data:
 
     <match system.auth.log>
       @type kafka2
-      brokers ac6e87673463a479fa5cd90a7a876939-af18a545350c8258.elb.ap-northeast-2.amazonaws.com:9094
+      brokers a01a893d804ad44018657f3b84eaaa35-1872ea900a3b7e8e.elb.ap-northeast-2.amazonaws.com:9094
       topic system-auth-topic
       use_event_time true
 

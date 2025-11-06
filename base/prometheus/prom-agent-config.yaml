@@ -104,7 +104,7 @@ data:
     # ✅ 5) Remote Write: 중앙 Prometheus로 전송
     ###############################################################
     remote_write:
-      - url: "http://afc92fad93b284bde93e1b7d4bc8c8a0-1120332621.ap-northeast-2.elb.amazonaws.com/api/v1/write"
+      - url: "http://a65ee31f118394e21a585bacd013f9c2-1956972664.ap-northeast-2.elb.amazonaws.com/api/v1/write"
         queue_config:
           max_shards: 8
           capacity: 20000

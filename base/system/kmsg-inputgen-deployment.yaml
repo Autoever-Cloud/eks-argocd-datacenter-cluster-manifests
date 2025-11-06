@@ -4,7 +4,7 @@ metadata:
   name: kmsg-inputgen-deployment
   namespace: system
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       system: kmsg
